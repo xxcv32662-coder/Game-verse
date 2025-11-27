@@ -509,9 +509,9 @@
             <input type="text" id="newGameUrl" placeholder="رابط التحميل">
             <div style="margin-bottom: 1rem;">
                 <label for="newGameImage" style="display: block; margin-bottom: 0.5rem; cursor: pointer; background: #4b5563; padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
-                    📁 اختر صورة اللعبة (JPG/JPEG)
+                    📁 اختر صورة اللعبة (JPG/JPEG أو PNG)
                 </label>
-                <input type="file" id="newGameImage" accept=".jpg,.jpeg,image/jpeg" style="display: none;" onchange="handleImageSelect(this, 'newGamePreview')">
+                <input type="file" id="newGameImage" accept="image/*" style="display: none;" onchange="handleImageSelect(this, 'newGamePreview')">
                 <img id="newGamePreview" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 0.5rem; margin-top: 0.5rem; display: none;">
             </div>
             <div class="modal-buttons">
@@ -531,7 +531,7 @@
                 <label for="editGameImage" style="display: block; margin-bottom: 0.5rem; cursor: pointer; background: #4b5563; padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
                     📁 اختر صورة جديدة (اختياري)
                 </label>
-                <input type="file" id="editGameImage" accept=".jpg,.jpeg,image/jpeg" style="display: none;" onchange="handleImageSelect(this, 'editGamePreview')">
+                <input type="file" id="editGameImage" accept="image/*" style="display: none;" onchange="handleImageSelect(this, 'editGamePreview')">
                 <img id="editGamePreview" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 0.5rem; margin-top: 0.5rem; display: none;">
             </div>
             <div class="modal-buttons">
@@ -549,12 +549,17 @@
     </main>
 
     <script>
-        // البيانات الأساسية
-        let currentUser = null;
-        let users = [
+        // مفاتيح localStorage المستخدمة
+        const LS_USERS = 'gv_users_v1';
+        const LS_GAMES = 'gv_games_v1';
+        const LS_CURRENT = 'gv_current_user_v1';
+
+        // بيانات افتراضية
+        const defaultUsers = [
             { username: 'lttl.5', password: 'admin', isOwner: true }
         ];
-        let games = [
+
+        const defaultGames = [
             {
                 id: 1,
                 name: 'Detroit: Become Human',
@@ -617,13 +622,83 @@
                 downloads: 0,
                 ratings: [],
                 comments: []
-            },
-
+            }
         ];
-        let editingGameId = null;
-        let editingCommentData = null;
 
-        // دوال Modal
+        // المتغيرات الحية
+        let users = [];
+        let games = [];
+        let currentUser = null;
+        let editingGameId = null;
+
+        // --- وظائف التخزين ---
+        function saveUsers() {
+            localStorage.setItem(LS_USERS, JSON.stringify(users));
+        }
+
+        function saveGames() {
+            localStorage.setItem(LS_GAMES, JSON.stringify(games));
+        }
+
+        function saveCurrentUser() {
+            if (currentUser) {
+                localStorage.setItem(LS_CURRENT, JSON.stringify({ username: currentUser.username }));
+            } else {
+                localStorage.removeItem(LS_CURRENT);
+            }
+        }
+
+        function loadAll() {
+            try {
+                const u = localStorage.getItem(LS_USERS);
+                const g = localStorage.getItem(LS_GAMES);
+                const c = localStorage.getItem(LS_CURRENT);
+
+                users = u ? JSON.parse(u) : defaultUsers.slice();
+                games = g ? JSON.parse(g) : defaultGames.slice();
+
+                // ensure owner exists
+                if (!users.find(x => x.username === 'lttl.5')) {
+                    users.unshift({ username: 'lttl.5', password: 'admin', isOwner: true });
+                }
+
+                // If current user saved, restore reference from users array
+                if (c) {
+                    try {
+                        const cu = JSON.parse(c);
+                        const found = users.find(u => u.username === cu.username);
+                        currentUser = found || null;
+                    } catch (e) {
+                        currentUser = null;
+                    }
+                }
+
+                // migrate safety: ensure each game has comments/ratings/downloads
+                games = games.map(gm => ({
+                    id: gm.id || Date.now(),
+                    name: gm.name || 'بدون اسم',
+                    image: gm.image || '',
+                    downloadUrl: gm.downloadUrl || '#',
+                    downloads: typeof gm.downloads === 'number' ? gm.downloads : 0,
+                    ratings: Array.isArray(gm.ratings) ? gm.ratings : [],
+                    comments: Array.isArray(gm.comments) ? gm.comments : []
+                }));
+
+                saveUsers();
+                saveGames();
+                saveCurrentUser();
+            } catch (err) {
+                console.error('خطأ بتحميل البيانات من التخزين:', err);
+                users = defaultUsers.slice();
+                games = defaultGames.slice();
+                currentUser = null;
+                saveUsers();
+                saveGames();
+                saveCurrentUser();
+            }
+        }
+
+        // --- واجهة المودال ---
         function openModal(modalId) {
             document.getElementById(modalId).classList.add('active');
             clearErrors();
@@ -644,31 +719,33 @@
             document.getElementById('registerError').innerHTML = '';
         }
 
-        // معالجة اختيار الصورة
+        // --- صورة المعاينة ---
         function handleImageSelect(input, previewId) {
-            const file = input.files[0];
-            if (file && (file.type === 'image/jpeg' || file.type === 'image/jpg')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.getElementById(previewId);
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                alert('يرجى اختيار صورة بصيغة JPG أو JPEG فقط');
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const allowed = ['image/jpeg','image/jpg','image/png','image/webp'];
+            if (!allowed.includes(file.type)) {
+                alert('يرجى اختيار صورة بصيغة مدعومة (JPG, PNG, WEBP)');
                 input.value = '';
+                return;
             }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById(previewId);
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
         }
 
-        // تسجيل الدخول
+        // --- تسجيل الدخول ---
         function handleLogin() {
-            const username = document.getElementById('loginUsername').value;
+            const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
-            
             const user = users.find(u => u.username === username && u.password === password);
             if (user) {
                 currentUser = user;
+                saveCurrentUser();
                 closeModal('loginModal');
                 document.getElementById('loginUsername').value = '';
                 document.getElementById('loginPassword').value = '';
@@ -679,66 +756,68 @@
             }
         }
 
-        // إنشاء حساب
+        // --- تسجيل جديد ---
         function handleRegister() {
-            const username = document.getElementById('registerUsername').value;
+            const username = document.getElementById('registerUsername').value.trim();
             const password = document.getElementById('registerPassword').value;
-            
+            if (!username || !password) {
+                showError('registerError', 'يرجى ملء جميع الحقول');
+                return;
+            }
             if (users.find(u => u.username === username)) {
                 showError('registerError', 'اسم المستخدم موجود بالفعل');
                 return;
             }
-            
-            if (username && password) {
-                const newUser = { username, password, isOwner: false };
-                users.push(newUser);
-                currentUser = newUser;
-                closeModal('registerModal');
-                document.getElementById('registerUsername').value = '';
-                document.getElementById('registerPassword').value = '';
-                updateHeader();
-                renderGames();
-            }
-        }
-
-        // تسجيل الخروج
-        function handleLogout() {
-            currentUser = null;
+            const newUser = { username, password, isOwner: false };
+            users.push(newUser);
+            saveUsers();
+            currentUser = newUser;
+            saveCurrentUser();
+            closeModal('registerModal');
+            document.getElementById('registerUsername').value = '';
+            document.getElementById('registerPassword').value = '';
             updateHeader();
             renderGames();
         }
 
-        // إضافة لعبة
-        function handleAddGame() {
-            const name = document.getElementById('newGameName').value;
-            const url = document.getElementById('newGameUrl').value;
-            const imageInput = document.getElementById('newGameImage');
-            const imagePreview = document.getElementById('newGamePreview');
-            
-            if (name && url && imagePreview.src) {
-                const game = {
-                    id: games.length + 1,
-                    name,
-                    image: imagePreview.src,
-                    downloadUrl: url,
-                    downloads: 0,
-                    ratings: [],
-                    comments: []
-                };
-                games.push(game);
-                closeModal('addGameModal');
-                document.getElementById('newGameName').value = '';
-                document.getElementById('newGameUrl').value = '';
-                imageInput.value = '';
-                imagePreview.src = '';
-                imagePreview.style.display = 'none';
-                renderGames();
-            } else {
-                alert('يرجى ملء جميع الحقول واختيار صورة');
-            }
+        // --- تسجيل خروج ---
+        function handleLogout() {
+            currentUser = null;
+            saveCurrentUser();
+            updateHeader();
+            renderGames();
         }
 
-        // تعديل لعبة
+        // --- إضافة لعبة ---
+        function handleAddGame() {
+            const name = document.getElementById('newGameName').value.trim();
+            const url = document.getElementById('newGameUrl').value.trim();
+            const imagePreview = document.getElementById('newGamePreview');
+            if (!name || !url || !imagePreview.src) {
+                alert('يرجى ملء جميع الحقول واختيار صورة');
+                return;
+            }
+            const game = {
+                id: Date.now(),
+                name,
+                image: imagePreview.src,
+                downloadUrl: url,
+                downloads: 0,
+                ratings: [],
+                comments: []
+            };
+            games.unshift(game); // أضف للأول ليظهر أولاً
+            saveGames();
+            closeModal('addGameModal');
+            document.getElementById('newGameName').value = '';
+            document.getElementById('newGameUrl').value = '';
+            document.getElementById('newGameImage').value = '';
+            imagePreview.src = '';
+            imagePreview.style.display = 'none';
+            renderGames();
+        }
+
+        // --- تعديل لعبة ---
         function openEditModal(gameId) {
             const game = games.find(g => g.id === gameId);
             if (game) {
@@ -747,261 +826,157 @@
                 document.getElementById('editGameUrl').value = game.downloadUrl;
                 const preview = document.getElementById('editGamePreview');
                 preview.src = game.image;
-                preview.style.display = 'block';
+                preview.style.display = game.image ? 'block' : 'none';
                 openModal('editGameModal');
             }
         }
 
         function handleEditGame() {
-            const name = document.getElementById('editGameName').value;
-            const url = document.getElementById('editGameUrl').value;
-            const imageInput = document.getElementById('editGameImage');
+            const name = document.getElementById('editGameName').value.trim();
+            const url = document.getElementById('editGameUrl').value.trim();
             const imagePreview = document.getElementById('editGamePreview');
-            
-            if (name && url && imagePreview.src) {
-                games = games.map(g => {
-                    if (g.id === editingGameId) {
-                        return { ...g, name, downloadUrl: url, image: imagePreview.src };
-                    }
-                    return g;
-                });
-                closeModal('editGameModal');
-                imageInput.value = '';
-                editingGameId = null;
-                renderGames();
-            } else {
+            if (!name || !url) {
                 alert('يرجى ملء جميع الحقول');
-            }
-        }
-
-        // التحميل
-        function handleDownload(gameId) {
-            if (!currentUser) {
-                openModal('loginModal');
                 return;
             }
-            games = games.map(g => {
-                if (g.id === gameId) {
-                    return { ...g, downloads: g.downloads + 1 };
-                }
-                return g;
-            });
+            games = games.map(g => g.id === editingGameId ? ({ ...g, name, downloadUrl: url, image: imagePreview.src || g.image }) : g);
+            saveGames();
+            closeModal('editGameModal');
+            document.getElementById('editGameImage').value = '';
+            editingGameId = null;
             renderGames();
         }
 
-        // التقييم
+        // --- تحميل (زيادة العدد) ---
+        function handleDownload(gameId) {
+            if (!currentUser) { openModal('loginModal'); return; }
+            games = games.map(g => g.id === gameId ? ({ ...g, downloads: (g.downloads || 0) + 1 }) : g);
+            saveGames();
+            renderGames();
+            // لا نعطل الرابط، بحيث يسمح للمستخدم بالنقر والانتقال
+        }
+
+        // --- تقييم ---
         function handleRate(gameId, rating) {
-            if (!currentUser) {
-                openModal('loginModal');
-                return;
-            }
+            if (!currentUser) { openModal('loginModal'); return; }
             games = games.map(g => {
                 if (g.id === gameId) {
-                    const existingRating = g.ratings.find(r => r.user === currentUser.username);
-                    if (existingRating) {
-                        return {
-                            ...g,
-                            ratings: g.ratings.map(r => 
-                                r.user === currentUser.username ? { ...r, rating } : r
-                            )
-                        };
+                    const existing = g.ratings.find(r => r.user === currentUser.username);
+                    if (existing) {
+                        return { ...g, ratings: g.ratings.map(r => r.user === currentUser.username ? ({ ...r, rating }) : r) };
                     }
                     return { ...g, ratings: [...g.ratings, { user: currentUser.username, rating }] };
                 }
                 return g;
             });
+            saveGames();
             renderGames();
         }
 
-        // التعليق
+        // --- تعليق ---
         function handleComment(gameId) {
-            if (!currentUser) {
-                openModal('loginModal');
-                return;
-            }
+            if (!currentUser) { openModal('loginModal'); return; }
             const input = document.getElementById(`comment-${gameId}`);
             const text = input.value.trim();
-            
-            if (text) {
-                games = games.map(g => {
-                    if (g.id === gameId) {
-                        return {
-                            ...g,
-                            comments: [...g.comments, {
-                                id: Date.now(),
-                                user: currentUser.username,
-                                text,
-                                date: new Date().toLocaleDateString('ar'),
-                                edited: false
-                            }]
-                        };
-                    }
-                    return g;
-                });
-                input.value = '';
-                renderGames();
-            }
+            if (!text) return;
+            const date = new Date().toLocaleString('ar');
+            games = games.map(g => g.id === gameId ? ({ ...g, comments: [...g.comments, { id: Date.now(), user: currentUser.username, text, date, edited: false }] }) : g);
+            saveGames();
+            input.value = '';
+            renderGames();
         }
 
-        // تعديل تعليق
+        // --- تعديل تعليق ---
         function editComment(gameId, commentId) {
             const game = games.find(g => g.id === gameId);
             const comment = game.comments.find(c => c.id === commentId);
-            
-            if (comment) {
-                const newText = prompt('تعديل التعليق:', comment.text);
-                if (newText && newText.trim() && newText !== comment.text) {
-                    games = games.map(g => {
-                        if (g.id === gameId) {
-                            return {
-                                ...g,
-                                comments: g.comments.map(c => 
-                                    c.id === commentId 
-                                        ? { ...c, text: newText.trim(), edited: true }
-                                        : c
-                                )
-                            };
-                        }
-                        return g;
-                    });
-                    renderGames();
-                }
-            }
+            if (!comment) return;
+            const newText = prompt('تعديل التعليق:', comment.text);
+            if (newText === null) return; // إلغاء
+            const trimmed = newText.trim();
+            if (!trimmed) return;
+            games = games.map(g => g.id === gameId ? ({ ...g, comments: g.comments.map(c => c.id === commentId ? ({ ...c, text: trimmed, edited: true, date: new Date().toLocaleString('ar') }) : c) }) : g);
+            saveGames();
+            renderGames();
         }
 
-        // حذف تعليق
+        // --- حذف تعليق ---
         function deleteComment(gameId, commentId) {
-            if (confirm('هل أنت متأكد من حذف هذا التعليق؟')) {
-                games = games.map(g => {
-                    if (g.id === gameId) {
-                        return {
-                            ...g,
-                            comments: g.comments.filter(c => c.id !== commentId)
-                        };
-                    }
-                    return g;
-                });
-                renderGames();
-            }
+            if (!confirm('هل أنت متأكد من حذف هذا التعليق؟')) return;
+            games = games.map(g => g.id === gameId ? ({ ...g, comments: g.comments.filter(c => c.id !== commentId) }) : g);
+            saveGames();
+            renderGames();
         }
 
-        // حساب المتوسط
+        // --- حساب المتوسط ---
         function getAverageRating(game) {
-            if (game.ratings.length === 0) return 0;
-            return (game.ratings.reduce((sum, r) => sum + r.rating, 0) / game.ratings.length).toFixed(1);
+            if (!game.ratings || game.ratings.length === 0) return 0;
+            return (game.ratings.reduce((s, r) => s + r.rating, 0) / game.ratings.length).toFixed(1);
         }
 
         function getUserRating(game) {
             if (!currentUser) return 0;
-            const rating = game.ratings.find(r => r.user === currentUser.username);
+            const rating = (game.ratings || []).find(r => r.user === currentUser.username);
             return rating ? rating.rating : 0;
         }
 
-        // تحديث الهيدر
+        // --- تحديث الهيدر ---
         function updateHeader() {
             const headerActions = document.getElementById('headerActions');
-            
             if (currentUser) {
-                headerActions.innerHTML = `
-                    <span class="user-info">
-                        👤 ${currentUser.username}
-                        ${currentUser.isOwner ? '<span class="owner-badge">مالك</span>' : ''}
-                    </span>
-                    ${currentUser.isOwner ? '<button class="btn-add" onclick="openModal(\'addGameModal\')">➕ إضافة لعبة</button>' : ''}
-                    <button class="btn-logout" onclick="handleLogout()">🚪 تسجيل خروج</button>
-                `;
+                headerActions.innerHTML = `\n                    <span class="user-info">\n                        👤 ${currentUser.username}\n                        ${currentUser.isOwner ? '<span class="owner-badge">مالك</span>' : ''}\n                    </span>\n                    ${currentUser.isOwner ? '<button class="btn-add" onclick="openModal(\'addGameModal\')">➕ إضافة لعبة</button>' : ''}\n                    <button class="btn-logout" onclick="handleLogout()">🚪 تسجيل خروج</button>\n                `;
             } else {
-                headerActions.innerHTML = `
-                    <button class="btn-login" onclick="openModal('loginModal')">تسجيل دخول</button>
-                    <button class="btn-register" onclick="openModal('registerModal')">إنشاء حساب</button>
-                `;
+                headerActions.innerHTML = `\n                    <button class="btn-login" onclick="openModal('loginModal')">تسجيل دخول</button>\n                    <button class="btn-register" onclick="openModal('registerModal')">إنشاء حساب</button>\n                `;
             }
         }
 
-        // عرض الألعاب
+        // --- عرض الألعاب ---
         function renderGames() {
             const gamesGrid = document.getElementById('gamesGrid');
-            
             gamesGrid.innerHTML = games.map(game => {
                 const avgRating = getAverageRating(game);
                 const userRating = getUserRating(game);
-                
-                return `
-                    <div class="game-card">
-                        <div class="game-image-container">
-                            <img src="${game.image}" alt="${game.name}">
-                            <div class="image-overlay"></div>
-                            ${currentUser?.isOwner ? `<button class="btn-edit" onclick="openEditModal(${game.id})">✏️</button>` : ''}
-                        </div>
-                        
-                        <div class="game-content">
-                            <h3 class="game-title">${game.name}</h3>
-                            
-                            <div class="game-stats">
-                                <div class="stat downloads">
-                                    📥 ${game.downloads} تحميل
-                                </div>
-                                <div class="stat rating">
-                                    ⭐ ${avgRating} (${game.ratings.length})
-                                </div>
-                            </div>
-                            
-                            <div class="rating-stars">
-                                ${[1, 2, 3, 4, 5].map(star => `
-                                    <span class="star ${star <= userRating ? 'filled' : 'empty'}" 
-                                          onclick="handleRate(${game.id}, ${star})">★</span>
-                                `).join('')}
-                            </div>
-                            
-                            <a href="${game.downloadUrl}" 
-                               onclick="handleDownload(${game.id})" 
-                               class="btn-download">
-                                📥 تحميل الآن
-                            </a>
-                            
-                            <div class="comments-section">
-                                <div class="comments-header">
-                                    💬 ${game.comments.length} تعليق
-                                </div>
-                                
-                                <div class="comments-list">
-                                    ${game.comments.map(comment => {
-                                        const canEdit = currentUser && (comment.user === currentUser.username || currentUser.isOwner);
-                                        return `
-                                        <div class="comment">
-                                            <div class="comment-header">
-                                                <span class="comment-user">${comment.user}</span>
-                                                <span class="comment-date">${comment.date}</span>
-                                            </div>
-                                            <p class="comment-text">${comment.text}</p>
-                                            ${comment.edited ? '<p class="comment-edited">تم تعديله</p>' : ''}
-                                            ${canEdit ? `
-                                                <div class="comment-actions">
-                                                    <button class="btn-edit-comment" onclick="editComment(${game.id}, ${comment.id})">✏️ تعديل</button>
-                                                    <button class="btn-delete-comment" onclick="deleteComment(${game.id}, ${comment.id})">🗑️ حذف</button>
-                                                </div>
-                                            ` : ''}
-                                        </div>
-                                    `}).join('')}
-                                </div>
-                                
-                                <div class="comment-input-container">
-                                    <input type="text" 
-                                           id="comment-${game.id}" 
-                                           placeholder="اكتب تعليقك..."
-                                           onkeypress="if(event.key === 'Enter') handleComment(${game.id})">
-                                    <button class="btn-send" onclick="handleComment(${game.id})">إرسال</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                const commentsHtml = (game.comments || []).map(comment => {
+                    const canEdit = currentUser && (comment.user === currentUser.username || currentUser.isOwner);
+                    return `\n                        <div class="comment">\n                            <div class="comment-header">\n                                <span class="comment-user">${comment.user}</span>\n                                <span class="comment-date">${comment.date}</span>\n                            </div>\n                            <p class="comment-text">${escapeHtml(comment.text)}</p>\n                            ${comment.edited ? '<p class="comment-edited">تم تعديله</p>' : ''}\n                            ${canEdit ? `\n                                <div class="comment-actions">\n                                    <button class="btn-edit-comment" onclick="editComment(${game.id}, ${comment.id})">✏️ تعديل</button>\n                                    <button class="btn-delete-comment" onclick="deleteComment(${game.id}, ${comment.id})">🗑️ حذف</button>\n                                </div>\n                            ` : ''}\n                        </div>\n                    `;
+                }).join('');
+
+                return `\n                    <div class="game-card">\n                        <div class="game-image-container">\n                            <img src="${game.image}" alt="${escapeHtml(game.name)}">\n                            <div class="image-overlay"></div>\n                            ${currentUser && currentUser.isOwner ? `<button class="btn-edit" onclick="openEditModal(${game.id})">✏️</button>` : ''}\n                        </div>\n                        \n                        <div class="game-content">\n                            <h3 class="game-title">${escapeHtml(game.name)}</h3>\n                            \n                            <div class="game-stats">\n                                <div class="stat downloads">\n                                    📥 ${game.downloads || 0} تحميل\n                                </div>\n                                <div class="stat rating">\n                                    ⭐ ${avgRating} (${(game.ratings || []).length})\n                                </div>\n                            </div>\n                            \n                            <div class="rating-stars">\n                                ${[1,2,3,4,5].map(star => `\n                                    <span class="star ${star <= userRating ? 'filled' : 'empty'}" onclick="handleRate(${game.id}, ${star})">★</span>\n                                `).join('')}\n                            </div>\n                            \n                            <a href="${game.downloadUrl}" target="_blank" rel="noopener" onclick="handleDownload(${game.id})" class="btn-download">\n                                📥 تحميل الآن\n                            </a>\n                            \n                            <div class="comments-section">\n                                <div class="comments-header">\n                                    💬 ${(game.comments || []).length} تعليق\n                                </div>\n                                \n                                <div class="comments-list">\n                                    ${commentsHtml}\n                                </div>\n                                \n                                <div class="comment-input-container">\n                                    <input type="text" id="comment-${game.id}" placeholder="اكتب تعليقك..." onkeypress="if(event.key === 'Enter') handleComment(${game.id})">\n                                    <button class="btn-send" onclick="handleComment(${game.id})">إرسال</button>\n                                </div>\n                            </div>\n                        </div>\n                    </div>\n                `;
             }).join('');
         }
 
-        // التهيئة الأولية
-        updateHeader();
-        renderGames();
+        // --- مساعدة: منع XSS بسيطة عند عرض النصوص ---
+        function escapeHtml(text) {
+            if (!text && text !== 0) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // --- تهيئة الصفحة ---
+        function init() {
+            loadAll();
+            updateHeader();
+            renderGames();
+
+            // رابطات المعاينة (لو الصورة في البيانات موجودة اعرضها)
+            document.querySelectorAll('#newGamePreview, #editGamePreview').forEach(img => {
+                if (img.src) img.style.display = 'block';
+            });
+        }
+
+        // استدعي التهيئة
+        init();
+
+        // حفظ نهائي عند إغلاق النافذة (اختياري)
+        window.addEventListener('beforeunload', () => {
+            saveUsers();
+            saveGames();
+            saveCurrentUser();
+        });
     </script>
 </body>
 </html>
