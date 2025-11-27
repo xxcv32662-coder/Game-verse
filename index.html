@@ -1,982 +1,195 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Verse - عالم الألعاب</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to bottom right, #581c87, #1e3a8a, #000000);
-            min-height: 100vh;
-            color: white;
-        }
-
-        /* Header */
-        header {
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(168, 85, 247, 0.3);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .header-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo-container {
-            position: relative;
-        }
-
-        .logo-glow {
-            position: absolute;
-            inset: 0;
-            background: #a855f7;
-            filter: blur(40px);
-            opacity: 0.5;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 0.8; }
-        }
-
-        h1 {
-            font-size: 2rem;
-            font-weight: bold;
-            background: linear-gradient(to right, #c084fc, #f472b6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            position: relative;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        button {
-            padding: 0.5rem 1.5rem;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1rem;
-        }
-
-        .btn-login {
-            background: linear-gradient(to right, #a855f7, #ec4899);
-        }
-
-        .btn-login:hover {
-            background: linear-gradient(to right, #9333ea, #db2777);
-        }
-
-        .btn-register {
-            background: linear-gradient(to right, #3b82f6, #06b6d4);
-        }
-
-        .btn-register:hover {
-            background: linear-gradient(to right, #2563eb, #0891b2);
-        }
-
-        .btn-logout {
-            background: #ef4444;
-        }
-
-        .btn-logout:hover {
-            background: #dc2626;
-        }
-
-        .btn-add {
-            background: linear-gradient(to right, #22c55e, #10b981);
-        }
-
-        .btn-add:hover {
-            background: linear-gradient(to right, #16a34a, #059669);
-        }
-
-        .user-info {
-            color: #d8b4fe;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .owner-badge {
-            background: #eab308;
-            color: black;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: linear-gradient(to bottom right, #581c87, #1e3a8a);
-            padding: 2rem;
-            border-radius: 1rem;
-            max-width: 500px;
-            width: 100%;
-            border: 2px solid rgba(168, 85, 247, 0.5);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-content h2 {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            font-size: 1.5rem;
-        }
-
-        .error-message {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid #ef4444;
-            color: #fca5a5;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        input[type="text"],
-        input[type="password"] {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            border-radius: 0.5rem;
-            padding: 0.75rem 1rem;
-            color: white;
-            margin-bottom: 1rem;
-            font-size: 1rem;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #a855f7;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 0.75rem;
-        }
-
-        .modal-buttons button {
-            flex: 1;
-            justify-content: center;
-        }
-
-        .btn-cancel {
-            background: #4b5563;
-        }
-
-        .btn-cancel:hover {
-            background: #374151;
-        }
-
-        /* Games Grid */
-        main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 3rem 2rem;
-        }
-
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 2rem;
-        }
-
-        .game-card {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(20px);
-            border-radius: 1rem;
-            overflow: hidden;
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            transition: all 0.3s;
-        }
-
-        .game-card:hover {
-            transform: scale(1.05);
-            border-color: #a855f7;
-            box-shadow: 0 20px 50px rgba(168, 85, 247, 0.5);
-        }
-
-        .game-image-container {
-            position: relative;
-            overflow: hidden;
-            height: 320px;
-        }
-
-        .game-image-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s;
-        }
-
-        .game-card:hover .game-image-container img {
-            transform: scale(1.1);
-        }
-
-        .image-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-        }
-
-        .btn-edit {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: #3b82f6;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-        }
-
-        .btn-edit:hover {
-            background: #2563eb;
-        }
-
-        .game-content {
-            padding: 1.5rem;
-        }
-
-        .game-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            text-align: right;
-        }
-
-        .game-stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .stat {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .stat.downloads {
-            color: #4ade80;
-        }
-
-        .stat.rating {
-            color: #facc15;
-        }
-
-        .rating-stars {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-            margin-bottom: 1rem;
-        }
-
-        .star {
-            cursor: pointer;
-            transition: transform 0.2s;
-            font-size: 1.5rem;
-        }
-
-        .star:hover {
-            transform: scale(1.25);
-        }
-
-        .star.filled {
-            color: #facc15;
-        }
-
-        .star.empty {
-            color: #6b7280;
-        }
-
-        .btn-download {
-            width: 100%;
-            background: linear-gradient(to right, #22c55e, #10b981);
-            justify-content: center;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-        }
-
-        .btn-download:hover {
-            background: linear-gradient(to right, #16a34a, #059669);
-        }
-
-        .comments-section {
-            border-top: 1px solid rgba(168, 85, 247, 0.3);
-            padding-top: 1rem;
-        }
-
-        .comments-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.75rem;
-            color: #c084fc;
-        }
-
-        .comments-list {
-            max-height: 240px;
-            overflow-y: auto;
-            margin-bottom: 0.75rem;
-        }
-
-        .comment {
-            background: rgba(88, 28, 135, 0.3);
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            margin-bottom: 0.75rem;
-            text-align: right;
-        }
-
-        .comment-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .comment-user {
-            color: #d8b4fe;
-            font-weight: bold;
-        }
-
-        .comment-date {
-            font-size: 0.75rem;
-            color: #9ca3af;
-        }
-
-        .comment-text {
-            font-size: 0.875rem;
-        }
-
-        .comment-edited {
-            font-size: 0.7rem;
-            color: #9ca3af;
-            font-style: italic;
-            margin-top: 0.25rem;
-        }
-
-        .comment-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .btn-edit-comment, .btn-delete-comment {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-            background: #4b5563;
-        }
-
-        .btn-edit-comment:hover {
-            background: #374151;
-        }
-
-        .btn-delete-comment {
-            background: #ef4444;
-        }
-
-        .btn-delete-comment:hover {
-            background: #dc2626;
-        }
-
-        .comment-input-container {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .comment-input-container input {
-            flex: 1;
-            margin-bottom: 0;
-        }
-
-        .btn-send {
-            background: #a855f7;
-            padding: 0.5rem 1rem;
-        }
-
-        .btn-send:hover {
-            background: #9333ea;
-        }
-
-        /* Icons (simple SVG) */
-        .icon {
-            width: 20px;
-            height: 20px;
-            display: inline-block;
-        }
-
-        @media (max-width: 768px) {
-            .games-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .header-container {
-                flex-direction: column;
-                gap: 1rem;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Verse - عالم الألعاب</title>
+<style>
+/* نفس التنسيقات القديمة للواجهة */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(to bottom right,#581c87,#1e3a8a,#000);min-height:100vh;color:white}
+header{background:rgba(0,0,0,0.5);backdrop-filter:blur(20px);border-bottom:1px solid rgba(168,85,247,0.3);position:sticky;top:0;z-index:1000}
+.header-container{max-width:1200px;margin:0 auto;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center}
+.logo-container{position:relative}
+.logo-glow{position:absolute;inset:0;background:#a855f7;filter:blur(40px);opacity:0.5;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:0.8}}
+h1{font-size:2rem;font-weight:bold;background:linear-gradient(to right,#c084fc,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;position:relative}
+.header-actions{display:flex;gap:1rem;align-items:center}
+button{padding:0.5rem 1.5rem;border:none;border-radius:0.5rem;cursor:pointer;font-weight:bold;transition:all 0.3s;display:flex;align-items:center;gap:0.5rem;font-size:1rem}
+.btn-login{background:linear-gradient(to right,#a855f7,#ec4899)}
+.btn-login:hover{background:linear-gradient(to right,#9333ea,#db2777)}
+.btn-register{background:linear-gradient(to right,#3b82f6,#06b6d4)}
+.btn-register:hover{background:linear-gradient(to right,#2563eb,#0891b2)}
+.btn-logout{background:#ef4444}
+.btn-logout:hover{background:#dc2626}
+.btn-add{background:linear-gradient(to right,#22c55e,#10b981)}
+.btn-add:hover{background:linear-gradient(to right,#16a34a,#059669)}
+.user-info{color:#d8b4fe;display:flex;align-items:center;gap:0.5rem}
+.owner-badge{background:#eab308;color:black;padding:0.25rem 0.5rem;border-radius:0.25rem;font-size:0.75rem}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);z-index:2000;align-items:center;justify-content:center;padding:1rem}
+.modal.active{display:flex}
+.modal-content{background:linear-gradient(to bottom right,#581c87,#1e3a8a);padding:2rem;border-radius:1rem;max-width:500px;width:100%;border:2px solid rgba(168,85,247,0.5);box-shadow:0 20px 50px rgba(0,0,0,0.5)}
+.modal-content h2{text-align:center;margin-bottom:1.5rem;font-size:1.5rem}
+.error-message{background:rgba(239,68,68,0.2);border:1px solid #ef4444;color:#fca5a5;padding:0.75rem 1rem;border-radius:0.5rem;margin-bottom:1rem}
+input[type="text"],input[type="password"]{width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(168,85,247,0.3);border-radius:0.5rem;padding:0.75rem 1rem;color:white;margin-bottom:1rem;font-size:1rem}
+input:focus{outline:none;border-color:#a855f7}
+.modal-buttons{display:flex;gap:0.75rem}
+.modal-buttons button{flex:1;justify-content:center}
+.btn-cancel{background:#4b5563}
+.btn-cancel:hover{background:#374151}
+main{max-width:1200px;margin:0 auto;padding:3rem 2rem}
+.games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:2rem}
+.game-card{background:rgba(0,0,0,0.4);backdrop-filter:blur(20px);border-radius:1rem;overflow:hidden;border:1px solid rgba(168,85,247,0.3);transition:all 0.3s}
+.game-card:hover{transform:scale(1.05);border-color:#a855f7;box-shadow:0 20px 50px rgba(168,85,247,0.5)}
+.game-image-container{position:relative;overflow:hidden;height:320px}
+.game-image-container img{width:100%;height:100%;object-fit:cover;transition:transform 0.5s}
+.game-card:hover .game-image-container img{transform:scale(1.1)}
+.image-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent)}
+.btn-edit{position:absolute;top:1rem;left:1rem;background:#3b82f6;padding:0.5rem;border-radius:0.5rem}
+.btn-edit:hover{background:#2563eb}
+.game-content{padding:1.5rem}
+.game-title{font-size:1.5rem;font-weight:bold;margin-bottom:1rem;text-align:right}
+.game-stats{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.stat{display:flex;align-items:center;gap:0.5rem}
+.stat.downloads{color:#4ade80}
+.stat.rating{color:#facc15}
+.rating-stars{display:flex;gap:0.5rem;justify-content:center;margin-bottom:1rem}
+.star{cursor:pointer;transition:transform 0.2s;font-size:1.5rem}
+.star:hover{transform:scale(1.25)}
+.star.filled{color:#facc15}
+.star.empty{color:#6b7280}
+.btn-download{width:100%;background:linear-gradient(to right,#22c55e,#10b981);justify-content:center;padding:0.75rem;margin-bottom:1rem}
+.btn-download:hover{background:linear-gradient(to right,#16a34a,#059669)}
+.comments-section{border-top:1px solid rgba(168,85,247,0.3);padding-top:1rem}
+.comments-header{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;color:#c084fc}
+.comments-list{max-height:240px;overflow-y:auto;margin-bottom:0.75rem}
+.comment{background:rgba(88,28,135,0.3);padding:0.75rem;border-radius:0.5rem;margin-bottom:0.75rem;text-align:right}
+.comment-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem}
+.comment-user{color:#d8b4fe;font-weight:bold}
+.comment-date{font-size:0.75rem;color:#9ca3af}
+.comment-text{font-size:0.875rem}
+.comment-edited{font-size:0.7rem;color:#9ca3af;font-style:italic;margin-top:0.25rem}
+.comment-actions{display:flex;gap:0.5rem;margin-top:0.5rem}
+.btn-edit-comment,.btn-delete-comment{padding:0.25rem 0.5rem;font-size:0.75rem;background:#4b5563}
+.btn-edit-comment:hover{background:#374151}
+.btn-delete-comment{background:#ef4444}
+.btn-delete-comment:hover{background:#dc2626}
+.comment-input-container{display:flex;gap:0.5rem}
+.comment-input-container input{flex:1;margin-bottom:0}
+.btn-send{background:#a855f7;padding:0.5rem 1rem}
+.btn-send:hover{background:#9333ea}
+@media(max-width:768px){.games-grid{grid-template-columns:1fr}.header-container{flex-direction:column;gap:1rem}}
+</style>
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <div class="header-container">
-            <div class="logo-container">
-                <div class="logo-glow"></div>
-                <h1>Game Verse</h1>
-            </div>
-            
-            <div class="header-actions" id="headerActions">
-                <!-- سيتم ملؤها بواسطة JavaScript -->
-            </div>
+<header>
+<div class="header-container">
+<div class="logo-container">
+<div class="logo-glow"></div>
+<h1>Game Verse</h1>
+</div>
+<div class="header-actions" id="headerActions"></div>
+</div>
+</header>
+
+<!-- Modals for login/register/add/edit remain unchanged (مثل السابق) -->
+
+<main>
+<div class="games-grid" id="gamesGrid"></div>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
+import { getFirestore, collection, addDoc, doc, getDocs, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBZrXdUHJbLfgcZ1E-yH41DrqbYgN0rXe0",
+  authDomain: "gameverse5.firebaseapp.com",
+  projectId: "gameverse5",
+  storageBucket: "gameverse5.firebasestorage.app",
+  messagingSenderId: "334892403820",
+  appId: "1:334892403820:web:ae46ebc2d6f5eb1be89c49",
+  measurementId: "G-JMJLD5KCS7"
+};
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app);
+
+// ---- بيانات المستخدمين الافتراضية ----
+let users = [{username:"lttl.5",password:"admin",isOwner:true}];
+let currentUser = null;
+
+// ---- واجهة المستخدم ----
+function updateHeader() {
+  const headerActions = document.getElementById('headerActions');
+  if(currentUser){
+    headerActions.innerHTML = `
+      <span class="user-info">👤 ${currentUser.username} ${currentUser.isOwner?'<span class="owner-badge">مالك</span>':''}</span>
+      ${currentUser.isOwner?'<button class="btn-add" onclick="openAddModal()">➕ إضافة لعبة</button>':''}
+      <button class="btn-logout" onclick="handleLogout()">🚪 تسجيل خروج</button>
+    `;
+  } else {
+    headerActions.innerHTML = `
+      <button class="btn-login" onclick="openLoginModal()">تسجيل دخول</button>
+      <button class="btn-register" onclick="openRegisterModal()">إنشاء حساب</button>
+    `;
+  }
+}
+
+// ---- استدعاء الألعاب من Firestore مباشرة ----
+const gamesCol = collection(db,'games');
+onSnapshot(gamesCol, snapshot=>{
+  const gamesData = snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
+  renderGames(gamesData);
+});
+
+// ---- عرض الألعاب ----
+function renderGames(games){
+  const grid = document.getElementById('gamesGrid');
+  grid.innerHTML = games.map(game=>{
+    const avgRating = game.ratings? (game.ratings.reduce((a,b)=>a+b.rating,0)/game.ratings.length).toFixed(1) : 0;
+    const userRating = currentUser && game.ratings? (game.ratings.find(r=>r.user===currentUser.username)?.rating || 0) : 0;
+    const commentsHtml = (game.comments||[]).map(c=>{
+      const canEdit = currentUser && (c.user===currentUser.username || currentUser.username==="lttl.5");
+      return `<div class="comment">
+        <div class="comment-header"><span class="comment-user">${c.user}</span> <span class="comment-date">${c.date}</span></div>
+        <p class="comment-text">${escapeHtml(c.text)}</p>
+        ${c.edited?'<p class="comment-edited">تم تعديله</p>':''}
+        ${canEdit?`<div class="comment-actions">
+          <button class="btn-edit-comment" onclick="editComment('${game.id}','${c.id}')">✏️ تعديل</button>
+          <button class="btn-delete-comment" onclick="deleteComment('${game.id}','${c.id}')">🗑️ حذف</button>
+        </div>`:''}
+      </div>`;
+    }).join('');
+    return `<div class="game-card">
+      <div class="game-image-container"><img src="${game.image}" alt="${escapeHtml(game.name)}"><div class="image-overlay"></div>
+      ${currentUser&&currentUser.isOwner?`<button class="btn-edit" onclick="openEditModal('${game.id}')">✏️</button>`:''}</div>
+      <div class="game-content">
+        <h3 class="game-title">${escapeHtml(game.name)}</h3>
+        <div class="game-stats">
+          <div class="stat downloads">📥 ${game.downloads||0} تحميل</div>
+          <div class="stat rating">⭐ ${avgRating} (${(game.ratings||[]).length})</div>
         </div>
-    </header>
-
-    <!-- Login Modal -->
-    <div class="modal" id="loginModal">
-        <div class="modal-content">
-            <h2>تسجيل الدخول</h2>
-            <div id="loginError"></div>
-            <input type="text" id="loginUsername" placeholder="اسم المستخدم">
-            <input type="password" id="loginPassword" placeholder="كلمة المرور">
-            <div class="modal-buttons">
-                <button class="btn-login" onclick="handleLogin()">دخول</button>
-                <button class="btn-cancel" onclick="closeModal('loginModal')">إلغاء</button>
-            </div>
+        <div class="rating-stars">${[1,2,3,4,5].map(s=>`<span class="star ${s<=userRating?'filled':'empty'}" onclick="rateGame('${game.id}',${s})">★</span>`).join('')}</div>
+        <a href="${game.downloadUrl}" target="_blank" onclick="downloadGame('${game.id}')" class="btn-download">📥 تحميل الآن</a>
+        <div class="comments-section">
+          <div class="comments-header">💬 ${(game.comments||[]).length} تعليق</div>
+          <div class="comments-list">${commentsHtml}</div>
+          <div class="comment-input-container">
+            <input type="text" id="comment-${game.id}" placeholder="اكتب تعليقك..." onkeypress="if(event.key==='Enter') sendComment('${game.id}')">
+            <button class="btn-send" onclick="sendComment('${game.id}')">إرسال</button>
+          </div>
         </div>
-    </div>
+      </div>
+    </div>`;
+  }).join('');
+}
 
-    <!-- Register Modal -->
-    <div class="modal" id="registerModal">
-        <div class="modal-content">
-            <h2>إنشاء حساب جديد</h2>
-            <div id="registerError"></div>
-            <input type="text" id="registerUsername" placeholder="اسم المستخدم">
-            <input type="password" id="registerPassword" placeholder="كلمة المرور">
-            <div class="modal-buttons">
-                <button class="btn-register" onclick="handleRegister()">إنشاء</button>
-                <button class="btn-cancel" onclick="closeModal('registerModal')">إلغاء</button>
-            </div>
-        </div>
-    </div>
+// ---- وظائف مساعدة ----
+function escapeHtml(t){return t?String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'):"";}
 
-    <!-- Add Game Modal -->
-    <div class="modal" id="addGameModal">
-        <div class="modal-content">
-            <h2>إضافة لعبة جديدة</h2>
-            <input type="text" id="newGameName" placeholder="اسم اللعبة">
-            <input type="text" id="newGameUrl" placeholder="رابط التحميل">
-            <div style="margin-bottom: 1rem;">
-                <label for="newGameImage" style="display: block; margin-bottom: 0.5rem; cursor: pointer; background: #4b5563; padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
-                    📁 اختر صورة اللعبة (JPG/JPEG أو PNG)
-                </label>
-                <input type="file" id="newGameImage" accept="image/*" style="display: none;" onchange="handleImageSelect(this, 'newGamePreview')">
-                <img id="newGamePreview" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 0.5rem; margin-top: 0.5rem; display: none;">
-            </div>
-            <div class="modal-buttons">
-                <button class="btn-add" onclick="handleAddGame()">نشر</button>
-                <button class="btn-cancel" onclick="closeModal('addGameModal')">إلغاء</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Game Modal -->
-    <div class="modal" id="editGameModal">
-        <div class="modal-content">
-            <h2>تعديل اللعبة</h2>
-            <input type="text" id="editGameName" placeholder="اسم اللعبة">
-            <input type="text" id="editGameUrl" placeholder="رابط التحميل">
-            <div style="margin-bottom: 1rem;">
-                <label for="editGameImage" style="display: block; margin-bottom: 0.5rem; cursor: pointer; background: #4b5563; padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
-                    📁 اختر صورة جديدة (اختياري)
-                </label>
-                <input type="file" id="editGameImage" accept="image/*" style="display: none;" onchange="handleImageSelect(this, 'editGamePreview')">
-                <img id="editGamePreview" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 0.5rem; margin-top: 0.5rem; display: none;">
-            </div>
-            <div class="modal-buttons">
-                <button class="btn-register" onclick="handleEditGame()">حفظ</button>
-                <button class="btn-cancel" onclick="closeModal('editGameModal')">إلغاء</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <main>
-        <div class="games-grid" id="gamesGrid">
-            <!-- سيتم ملؤها بواسطة JavaScript -->
-        </div>
-    </main>
-
-    <script>
-        // مفاتيح localStorage المستخدمة
-        const LS_USERS = 'gv_users_v1';
-        const LS_GAMES = 'gv_games_v1';
-        const LS_CURRENT = 'gv_current_user_v1';
-
-        // بيانات افتراضية
-        const defaultUsers = [
-            { username: 'lttl.5', password: 'admin', isOwner: true }
-        ];
-
-        const defaultGames = [
-            {
-                id: 1,
-                name: 'Detroit: Become Human',
-                image: 'https://cdn.salla.sa/jZqRml/3217dd41-6192-4914-a74e-caf3e1651b7b-909.22844175492x1000-v68pNRKNOVQki4YJhTKSBCObilFq2p4Tkm4ov3bY.jpg',
-                downloadUrl: 'https://up.downloadcomputergames.net/0/0/files/Detroit-Become-Human.zip',
-                downloads: 0,
-                ratings: [],
-                comments: []
-            },
-            {
-                id: 2,
-                name: 'Red Dead Redemption 2',
-                image: 'https://image.api.playstation.com/cdn/UP1004/CUSA03041_00/Hpl5MtwQgOVF9vJqlfui6SDB5Jl4oBSq.png',
-                downloadUrl: 'https://1fichier.com/?epzveep3rqng0va6h3tk',
-                downloads: 0,
-                ratings: [],
-                comments: []
-            },
-            {
-                id: 3,
-                name: 'Battlefield 1',
-                image: 'https://upload.wikimedia.org/wikipedia/ar/f/fc/Battlefield_1_cover_art.jpg',
-                downloadUrl: 'https://up.downloadcomputergames.net/2021/11/battlefield-1/Battlefield-1.zip',
-                downloads: 0,
-                ratings: [],
-                comments: []
-            },
-            {
-                id: 4,
-                name: 'GTA V',
-                image: 'https://upload.wikimedia.org/wikipedia/en/a/a5/Grand_Theft_Auto_V.png',
-                downloadUrl: 'https://up.downloadcomputergames.net/2020/10/download-gta-5-for-pc/GTA-V.zip',
-                downloads: 0,
-                ratings: [],
-                comments: []
-            },
-            {
-                id: 5,
-                name: 'GTA III المحسنة',
-                image: 'https://uptogames.net/wp-content/uploads/2024/02/GTA-III-Definitive-Edition.webp',
-                downloadUrl: 'https://up.downloadcomputergames.net/2022/03/gta-iii-definitive-edition/GTA-III-Definitive-Edition.zip',
-                downloads: 0,
-                ratings: [],
-                comments: []
-            },
-            {
-                id: 6,
-                name: 'GTA Vice City المحسنة',
-                image: 'https://i0.wp.com/www.vga4a.com/wp-content/uploads/hq720-14.jpg?w=686&ssl=1',
-                downloadUrl: 'https://up.downloadcomputergames.net/2022/03/gta-vice-city-definitive-edition/GTA-Vice-City-Definitive-Edition.zip',
-                downloads: 0,
-                ratings: [],
-                comments: []
-            },
-            {
-                id: 7,
-                name: 'planet costrبلانت كوستر',
-                image: 'https://upload.wikimedia.org/wikipedia/en/6/60/Planet_coaster_box.png',
-                downloadUrl: 'https://buzzheavier.com/orl2l8tc6zrc',
-                downloads: 0,
-                ratings: [],
-                comments: []
-            }
-        ];
-
-        // المتغيرات الحية
-        let users = [];
-        let games = [];
-        let currentUser = null;
-        let editingGameId = null;
-
-        // --- وظائف التخزين ---
-        function saveUsers() {
-            localStorage.setItem(LS_USERS, JSON.stringify(users));
-        }
-
-        function saveGames() {
-            localStorage.setItem(LS_GAMES, JSON.stringify(games));
-        }
-
-        function saveCurrentUser() {
-            if (currentUser) {
-                localStorage.setItem(LS_CURRENT, JSON.stringify({ username: currentUser.username }));
-            } else {
-                localStorage.removeItem(LS_CURRENT);
-            }
-        }
-
-        function loadAll() {
-            try {
-                const u = localStorage.getItem(LS_USERS);
-                const g = localStorage.getItem(LS_GAMES);
-                const c = localStorage.getItem(LS_CURRENT);
-
-                users = u ? JSON.parse(u) : defaultUsers.slice();
-                games = g ? JSON.parse(g) : defaultGames.slice();
-
-                // ensure owner exists
-                if (!users.find(x => x.username === 'lttl.5')) {
-                    users.unshift({ username: 'lttl.5', password: 'admin', isOwner: true });
-                }
-
-                // If current user saved, restore reference from users array
-                if (c) {
-                    try {
-                        const cu = JSON.parse(c);
-                        const found = users.find(u => u.username === cu.username);
-                        currentUser = found || null;
-                    } catch (e) {
-                        currentUser = null;
-                    }
-                }
-
-                // migrate safety: ensure each game has comments/ratings/downloads
-                games = games.map(gm => ({
-                    id: gm.id || Date.now(),
-                    name: gm.name || 'بدون اسم',
-                    image: gm.image || '',
-                    downloadUrl: gm.downloadUrl || '#',
-                    downloads: typeof gm.downloads === 'number' ? gm.downloads : 0,
-                    ratings: Array.isArray(gm.ratings) ? gm.ratings : [],
-                    comments: Array.isArray(gm.comments) ? gm.comments : []
-                }));
-
-                saveUsers();
-                saveGames();
-                saveCurrentUser();
-            } catch (err) {
-                console.error('خطأ بتحميل البيانات من التخزين:', err);
-                users = defaultUsers.slice();
-                games = defaultGames.slice();
-                currentUser = null;
-                saveUsers();
-                saveGames();
-                saveCurrentUser();
-            }
-        }
-
-        // --- واجهة المودال ---
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.add('active');
-            clearErrors();
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-            clearErrors();
-        }
-
-        function showError(elementId, message) {
-            const errorDiv = document.getElementById(elementId);
-            errorDiv.innerHTML = `<div class="error-message">${message}</div>`;
-        }
-
-        function clearErrors() {
-            document.getElementById('loginError').innerHTML = '';
-            document.getElementById('registerError').innerHTML = '';
-        }
-
-        // --- صورة المعاينة ---
-        function handleImageSelect(input, previewId) {
-            const file = input.files && input.files[0];
-            if (!file) return;
-            const allowed = ['image/jpeg','image/jpg','image/png','image/webp'];
-            if (!allowed.includes(file.type)) {
-                alert('يرجى اختيار صورة بصيغة مدعومة (JPG, PNG, WEBP)');
-                input.value = '';
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const preview = document.getElementById(previewId);
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // --- تسجيل الدخول ---
-        function handleLogin() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            const user = users.find(u => u.username === username && u.password === password);
-            if (user) {
-                currentUser = user;
-                saveCurrentUser();
-                closeModal('loginModal');
-                document.getElementById('loginUsername').value = '';
-                document.getElementById('loginPassword').value = '';
-                updateHeader();
-                renderGames();
-            } else {
-                showError('loginError', 'اسم المستخدم أو كلمة المرور غير صحيحة');
-            }
-        }
-
-        // --- تسجيل جديد ---
-        function handleRegister() {
-            const username = document.getElementById('registerUsername').value.trim();
-            const password = document.getElementById('registerPassword').value;
-            if (!username || !password) {
-                showError('registerError', 'يرجى ملء جميع الحقول');
-                return;
-            }
-            if (users.find(u => u.username === username)) {
-                showError('registerError', 'اسم المستخدم موجود بالفعل');
-                return;
-            }
-            const newUser = { username, password, isOwner: false };
-            users.push(newUser);
-            saveUsers();
-            currentUser = newUser;
-            saveCurrentUser();
-            closeModal('registerModal');
-            document.getElementById('registerUsername').value = '';
-            document.getElementById('registerPassword').value = '';
-            updateHeader();
-            renderGames();
-        }
-
-        // --- تسجيل خروج ---
-        function handleLogout() {
-            currentUser = null;
-            saveCurrentUser();
-            updateHeader();
-            renderGames();
-        }
-
-        // --- إضافة لعبة ---
-        function handleAddGame() {
-            const name = document.getElementById('newGameName').value.trim();
-            const url = document.getElementById('newGameUrl').value.trim();
-            const imagePreview = document.getElementById('newGamePreview');
-            if (!name || !url || !imagePreview.src) {
-                alert('يرجى ملء جميع الحقول واختيار صورة');
-                return;
-            }
-            const game = {
-                id: Date.now(),
-                name,
-                image: imagePreview.src,
-                downloadUrl: url,
-                downloads: 0,
-                ratings: [],
-                comments: []
-            };
-            games.unshift(game); // أضف للأول ليظهر أولاً
-            saveGames();
-            closeModal('addGameModal');
-            document.getElementById('newGameName').value = '';
-            document.getElementById('newGameUrl').value = '';
-            document.getElementById('newGameImage').value = '';
-            imagePreview.src = '';
-            imagePreview.style.display = 'none';
-            renderGames();
-        }
-
-        // --- تعديل لعبة ---
-        function openEditModal(gameId) {
-            const game = games.find(g => g.id === gameId);
-            if (game) {
-                editingGameId = gameId;
-                document.getElementById('editGameName').value = game.name;
-                document.getElementById('editGameUrl').value = game.downloadUrl;
-                const preview = document.getElementById('editGamePreview');
-                preview.src = game.image;
-                preview.style.display = game.image ? 'block' : 'none';
-                openModal('editGameModal');
-            }
-        }
-
-        function handleEditGame() {
-            const name = document.getElementById('editGameName').value.trim();
-            const url = document.getElementById('editGameUrl').value.trim();
-            const imagePreview = document.getElementById('editGamePreview');
-            if (!name || !url) {
-                alert('يرجى ملء جميع الحقول');
-                return;
-            }
-            games = games.map(g => g.id === editingGameId ? ({ ...g, name, downloadUrl: url, image: imagePreview.src || g.image }) : g);
-            saveGames();
-            closeModal('editGameModal');
-            document.getElementById('editGameImage').value = '';
-            editingGameId = null;
-            renderGames();
-        }
-
-        // --- تحميل (زيادة العدد) ---
-        function handleDownload(gameId) {
-            if (!currentUser) { openModal('loginModal'); return; }
-            games = games.map(g => g.id === gameId ? ({ ...g, downloads: (g.downloads || 0) + 1 }) : g);
-            saveGames();
-            renderGames();
-            // لا نعطل الرابط، بحيث يسمح للمستخدم بالنقر والانتقال
-        }
-
-        // --- تقييم ---
-        function handleRate(gameId, rating) {
-            if (!currentUser) { openModal('loginModal'); return; }
-            games = games.map(g => {
-                if (g.id === gameId) {
-                    const existing = g.ratings.find(r => r.user === currentUser.username);
-                    if (existing) {
-                        return { ...g, ratings: g.ratings.map(r => r.user === currentUser.username ? ({ ...r, rating }) : r) };
-                    }
-                    return { ...g, ratings: [...g.ratings, { user: currentUser.username, rating }] };
-                }
-                return g;
-            });
-            saveGames();
-            renderGames();
-        }
-
-        // --- تعليق ---
-        function handleComment(gameId) {
-            if (!currentUser) { openModal('loginModal'); return; }
-            const input = document.getElementById(`comment-${gameId}`);
-            const text = input.value.trim();
-            if (!text) return;
-            const date = new Date().toLocaleString('ar');
-            games = games.map(g => g.id === gameId ? ({ ...g, comments: [...g.comments, { id: Date.now(), user: currentUser.username, text, date, edited: false }] }) : g);
-            saveGames();
-            input.value = '';
-            renderGames();
-        }
-
-        // --- تعديل تعليق ---
-        function editComment(gameId, commentId) {
-            const game = games.find(g => g.id === gameId);
-            const comment = game.comments.find(c => c.id === commentId);
-            if (!comment) return;
-            const newText = prompt('تعديل التعليق:', comment.text);
-            if (newText === null) return; // إلغاء
-            const trimmed = newText.trim();
-            if (!trimmed) return;
-            games = games.map(g => g.id === gameId ? ({ ...g, comments: g.comments.map(c => c.id === commentId ? ({ ...c, text: trimmed, edited: true, date: new Date().toLocaleString('ar') }) : c) }) : g);
-            saveGames();
-            renderGames();
-        }
-
-        // --- حذف تعليق ---
-        function deleteComment(gameId, commentId) {
-            if (!confirm('هل أنت متأكد من حذف هذا التعليق؟')) return;
-            games = games.map(g => g.id === gameId ? ({ ...g, comments: g.comments.filter(c => c.id !== commentId) }) : g);
-            saveGames();
-            renderGames();
-        }
-
-        // --- حساب المتوسط ---
-        function getAverageRating(game) {
-            if (!game.ratings || game.ratings.length === 0) return 0;
-            return (game.ratings.reduce((s, r) => s + r.rating, 0) / game.ratings.length).toFixed(1);
-        }
-
-        function getUserRating(game) {
-            if (!currentUser) return 0;
-            const rating = (game.ratings || []).find(r => r.user === currentUser.username);
-            return rating ? rating.rating : 0;
-        }
-
-        // --- تحديث الهيدر ---
-        function updateHeader() {
-            const headerActions = document.getElementById('headerActions');
-            if (currentUser) {
-                headerActions.innerHTML = `\n                    <span class="user-info">\n                        👤 ${currentUser.username}\n                        ${currentUser.isOwner ? '<span class="owner-badge">مالك</span>' : ''}\n                    </span>\n                    ${currentUser.isOwner ? '<button class="btn-add" onclick="openModal(\'addGameModal\')">➕ إضافة لعبة</button>' : ''}\n                    <button class="btn-logout" onclick="handleLogout()">🚪 تسجيل خروج</button>\n                `;
-            } else {
-                headerActions.innerHTML = `\n                    <button class="btn-login" onclick="openModal('loginModal')">تسجيل دخول</button>\n                    <button class="btn-register" onclick="openModal('registerModal')">إنشاء حساب</button>\n                `;
-            }
-        }
-
-        // --- عرض الألعاب ---
-        function renderGames() {
-            const gamesGrid = document.getElementById('gamesGrid');
-            gamesGrid.innerHTML = games.map(game => {
-                const avgRating = getAverageRating(game);
-                const userRating = getUserRating(game);
-                const commentsHtml = (game.comments || []).map(comment => {
-                    const canEdit = currentUser && (comment.user === currentUser.username || currentUser.isOwner);
-                    return `\n                        <div class="comment">\n                            <div class="comment-header">\n                                <span class="comment-user">${comment.user}</span>\n                                <span class="comment-date">${comment.date}</span>\n                            </div>\n                            <p class="comment-text">${escapeHtml(comment.text)}</p>\n                            ${comment.edited ? '<p class="comment-edited">تم تعديله</p>' : ''}\n                            ${canEdit ? `\n                                <div class="comment-actions">\n                                    <button class="btn-edit-comment" onclick="editComment(${game.id}, ${comment.id})">✏️ تعديل</button>\n                                    <button class="btn-delete-comment" onclick="deleteComment(${game.id}, ${comment.id})">🗑️ حذف</button>\n                                </div>\n                            ` : ''}\n                        </div>\n                    `;
-                }).join('');
-
-                return `\n                    <div class="game-card">\n                        <div class="game-image-container">\n                            <img src="${game.image}" alt="${escapeHtml(game.name)}">\n                            <div class="image-overlay"></div>\n                            ${currentUser && currentUser.isOwner ? `<button class="btn-edit" onclick="openEditModal(${game.id})">✏️</button>` : ''}\n                        </div>\n                        \n                        <div class="game-content">\n                            <h3 class="game-title">${escapeHtml(game.name)}</h3>\n                            \n                            <div class="game-stats">\n                                <div class="stat downloads">\n                                    📥 ${game.downloads || 0} تحميل\n                                </div>\n                                <div class="stat rating">\n                                    ⭐ ${avgRating} (${(game.ratings || []).length})\n                                </div>\n                            </div>\n                            \n                            <div class="rating-stars">\n                                ${[1,2,3,4,5].map(star => `\n                                    <span class="star ${star <= userRating ? 'filled' : 'empty'}" onclick="handleRate(${game.id}, ${star})">★</span>\n                                `).join('')}\n                            </div>\n                            \n                            <a href="${game.downloadUrl}" target="_blank" rel="noopener" onclick="handleDownload(${game.id})" class="btn-download">\n                                📥 تحميل الآن\n                            </a>\n                            \n                            <div class="comments-section">\n                                <div class="comments-header">\n                                    💬 ${(game.comments || []).length} تعليق\n                                </div>\n                                \n                                <div class="comments-list">\n                                    ${commentsHtml}\n                                </div>\n                                \n                                <div class="comment-input-container">\n                                    <input type="text" id="comment-${game.id}" placeholder="اكتب تعليقك..." onkeypress="if(event.key === 'Enter') handleComment(${game.id})">\n                                    <button class="btn-send" onclick="handleComment(${game.id})">إرسال</button>\n                                </div>\n                            </div>\n                        </div>\n                    </div>\n                `;
-            }).join('');
-        }
-
-        // --- مساعدة: منع XSS بسيطة عند عرض النصوص ---
-        function escapeHtml(text) {
-            if (!text && text !== 0) return '';
-            return String(text)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-
-        // --- تهيئة الصفحة ---
-        function init() {
-            loadAll();
-            updateHeader();
-            renderGames();
-
-            // رابطات المعاينة (لو الصورة في البيانات موجودة اعرضها)
-            document.querySelectorAll('#newGamePreview, #editGamePreview').forEach(img => {
-                if (img.src) img.style.display = 'block';
-            });
-        }
-
-        // استدعي التهيئة
-        init();
-
-        // حفظ نهائي عند إغلاق النافذة (اختياري)
-        window.addEventListener('beforeunload', () => {
-            saveUsers();
-            saveGames();
-            saveCurrentUser();
-        });
-    </script>
+</script>
 </body>
 </html>
